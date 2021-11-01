@@ -2,6 +2,7 @@ class Client:
     clients: list = []
 
     def __init__(self, client):
+        # client = ws client
         self.client = client
         self.id = client.get("id")
         self.handler = client.get("handler")

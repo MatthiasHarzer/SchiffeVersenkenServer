@@ -20,6 +20,7 @@ class Server(WebsocketServer):
     def __init__(self, threaded=False):
         super().__init__(DEFAULT_HOST, DEFAULT_PORT)
 
+        # Register callbacks
         self.set_fn_new_client(self.on_connect)
         self.set_fn_client_left(self.on_disconnect)
         self.set_fn_message_received(self.on_message)
@@ -27,6 +28,7 @@ class Server(WebsocketServer):
         print("STARTING SERVER")
 
         self.run_forever(threaded=threaded)
+
 
     def on_connect(self, client, _):
         print("CLIENT CONNECTED", client)
@@ -39,7 +41,6 @@ class Server(WebsocketServer):
         Client.remove(client)
 
     def on_message(self, c, _, message):
-
         try:
             client = Client.getOrCreate(c)
 
@@ -106,6 +107,7 @@ class Server(WebsocketServer):
         print(f"SENDING: {data} to {client}")
         self.send_message(client.client, json.dumps(data))
 
+    # Send login update when new palyer joins match
     def sendLoginUpdate(self, clients: list[Client]):
         for c in clients:
             match = Match.getByPlayer(c)
