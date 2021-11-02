@@ -18,7 +18,7 @@ class Match:
         self.stats = {
             player0: {
                 "ships": [],
-                "bombs": []
+                "bombed": []
             }
         }
 
@@ -37,7 +37,7 @@ class Match:
             self.players.append(player)
             self.stats[player] = {
                 "ships": [],
-                "bombs": []
+                "bombed": []
             }
             return "SUCCESS", self
         else:
@@ -63,13 +63,30 @@ class Match:
             "state": f"P{self.players.index(self.currentPlayer)}"
         })
 
+    def __checkVictory(self):
+        for player, stats in self.stats.items():
+            print(player, stats)
+            lost = True
+            for ship in stats.get("ships", []):
+                for ship_part in ship:
+                    if ship_part not in stats.get("bombed", []):
+                        lost = False
+            if lost:
+                self.broadcast({
+                    "type": "GAME_STATE",
+                    "state": f"W{len(self.players)-1-self.players.index(player)}"
+                })
+                break
+
     # Bomb a field of a player
     def __bomb(self, field: list[int], map_player: Client):
+        self.stats[map_player]["bombed"].append(field)
         self.__sendFieldResp(field, self.players.index(map_player), "HIT" if field in self.stats[map_player]["ships"] else "MISS")
 
     # Send a field response to all players
     def __sendFieldResp(self, field: list[int], map_player_num: int, state: str):
         self.broadcast({
+            "type": "FIELD_RESP",
             "field": field,
             "map": map_player_num,
             "state": state
@@ -77,17 +94,27 @@ class Match:
 
     # Switch active player
     def cyclePlayer(self):
+
         self.currentPlayer = self.players[len(self.players)-1-self.players.index(self.currentPlayer)]
 
     # Request bombing a field
     def fieldReq(self, field: list[int], player: Client):
         if player == self.currentPlayer and player in self.players:
-            self.__bomb(field, self.players[len(self.players)-1-self.players.index(player)])
-            self.cyclePlayer()
-            self.__sendGameRunningUpdate()
+            field_player = self.players[len(self.players)-1-self.players.index(player)];
+            if field not in self.stats[field_player]["bombed"]:
+                self.__bomb(field, field_player)
+                self.cyclePlayer()
+                self.__sendGameRunningUpdate()
+                self.__checkVictory()
+            else:
+                self.broadcast({
+                    "type": "FIELD_RESP",
+                    "field": field,
+                    "state": "FCKU"
+                })
 
     # Set ships
-    def setMap(self, player: Client, ships: list):
+    def setMap(self, player: Client, ships: list[list[list[int]]]):
         if player in self.players and not self.running:
             self.stats[player]["ships"] = ships
 
@@ -103,6 +130,16 @@ class Match:
     def requestStartPlacing(self, player: Client):
         if self.host == player:
             self.__startPlace()
+
+    # Send login update when new palyer joins match
+    def sendPlayerUpdate(self):
+        for player in self.players:
+            self.server.send(player, {
+                "type": "LOGIN",
+                "name": player.name,
+                "player": [p.name for p in self.players],
+                "playerNr": self.players.index(player),
+            })
 
     # Boradcast a message to match players
     def broadcast(self, data: dict):

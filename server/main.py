@@ -1,3 +1,5 @@
+
+
 import json
 
 from websocket_server import WebsocketServer
@@ -6,7 +8,7 @@ from client import Client
 from server.match import Match
 from server.util import genericName
 
-DEFAULT_PORT = 8080
+DEFAULT_PORT = 4269
 DEFAULT_HOST = "0.0.0.0"
 
 
@@ -29,16 +31,18 @@ class Server(WebsocketServer):
 
         self.run_forever(threaded=threaded)
 
-
     def on_connect(self, client, _):
         print("CLIENT CONNECTED", client)
         Client.getOrCreate(client)
 
     def on_disconnect(self, client, _):
         print("CLIENT DISCONNECTED", client)
+        c = Client.getByID(client.get("id", -1))
+        match = Match.getByPlayer(c)
 
         Match.removePlayer(Client.getByID(client.get("id", -1)))
         Client.remove(client)
+        match.sendPlayerUpdate()
 
     def on_message(self, c, _, message):
         try:
@@ -61,24 +65,32 @@ class Server(WebsocketServer):
                         "type": "LOGIN",
                         "name": name
                     })
+                    if match:
+                        match.sendPlayerUpdate()
 
                 case "CREATE":
                     match = Match(client, self)
+                    mid = data.get("mid", "")
 
                     self.send(client, {
                         "type": "CREATE",
-                        "id": match.id
+                        "id": match.id,
+                        "mid": mid
                     })
+                    match.sendPlayerUpdate()
 
                 case "JOIN":
                     id_ = data.get("id", "")
+                    mid = data.get("mid", "")
                     state, match = Match.joinById(id_, client)
                     self.send(client, {
                         "type": "JOIN",
-                        "state": state
+                        "state": state,
+                        "mid": mid
                     })
                     if match:
-                        self.sendLoginUpdate(match.players)
+                        match.sendPlayerUpdate()
+
 
                 case "GAME_STATE":
                     state = data.get("state", "")
@@ -88,16 +100,16 @@ class Server(WebsocketServer):
                                 match.requestStartPlacing(client)
 
                 case "SET_MAP":
-                    ships = data.get("map", [])
+                    ships = data.get("map", [[[]]])
 
-                    if match and len(ships > 0):
+                    if match and len(ships) > 0:
                         match.setMap(client, ships)
 
                 case "FIELD_REQ":
                     field = data.get("field", [])
 
-                    if match and len(field == 2):
-                        match.setMap(client, ships)
+                    if match and len(field) == 2:
+                        match.fieldReq(field, client)
 
 
         except Exception as e:
@@ -107,16 +119,7 @@ class Server(WebsocketServer):
         print(f"SENDING: {data} to {client}")
         self.send_message(client.client, json.dumps(data))
 
-    # Send login update when new palyer joins match
-    def sendLoginUpdate(self, clients: list[Client]):
-        for c in clients:
-            match = Match.getByPlayer(c)
-            self.send(c, {
-                "type": "LOGIN",
-                "name": c.name,
-                "player": [p.name for p in match.players] if match else [],
-                "playerNr": match.players.index(c) if match else -1,
-            })
+
 
 if __name__ == "__main__":
     s = Server()
