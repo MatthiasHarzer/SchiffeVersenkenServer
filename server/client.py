@@ -13,7 +13,7 @@ class Client:
         Client.clients.append(self)
 
     def __str__(self):
-        return f"Client {self.id} \"{self.name}\" @ {self.address} "
+        return f"<Client {self.id} \"{self.name}\" @{self.address}>"
 
     @staticmethod
     def getOrCreate(client):

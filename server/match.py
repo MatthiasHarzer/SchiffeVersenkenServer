@@ -1,7 +1,7 @@
 import random
 
-from server.client import Client
-from server.util import uniqueRandomString
+from client import Client
+from util import uniqueRandomString
 
 
 class Match:
@@ -24,7 +24,7 @@ class Match:
 
         self.currentPlayer = None
 
-        from server.main import Server
+        from main import Server
         self.server: Server = server
 
         self.running = False

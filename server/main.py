@@ -1,12 +1,11 @@
 
-
 import json
 
 from websocket_server import WebsocketServer
 
 from client import Client
-from server.match import Match
-from server.util import genericName
+from match import Match
+from util import genericName
 
 DEFAULT_PORT = 4269
 DEFAULT_HOST = "0.0.0.0"
@@ -42,7 +41,8 @@ class Server(WebsocketServer):
 
         Match.removePlayer(Client.getByID(client.get("id", -1)))
         Client.remove(client)
-        match.sendPlayerUpdate()
+        if match:
+            match.sendPlayerUpdate()
 
     def on_message(self, c, _, message):
         try:
@@ -91,7 +91,6 @@ class Server(WebsocketServer):
                     if match:
                         match.sendPlayerUpdate()
 
-
                 case "GAME_STATE":
                     state = data.get("state", "")
                     match state:
@@ -110,6 +109,9 @@ class Server(WebsocketServer):
 
                     if match and len(field) == 2:
                         match.fieldReq(field, client)
+
+                # case "SETTINGS":
+
 
 
         except Exception as e:
