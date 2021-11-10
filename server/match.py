@@ -13,7 +13,7 @@ class Match:
             player0
         ]
         self.settings = {
-
+            # DEFAULT SETTINGS
         }
         self.stats = {
             player0: {
@@ -74,14 +74,15 @@ class Match:
             if lost:
                 self.broadcast({
                     "type": "GAME_STATE",
-                    "state": f"W{len(self.players)-1-self.players.index(player)}"
+                    "state": f"W{len(self.players) - 1 - self.players.index(player)}"
                 })
                 break
 
     # Bomb a field of a player
     def __bomb(self, field: list[int], map_player: Client):
         self.stats[map_player]["bombed"].append(field)
-        self.__sendFieldResp(field, self.players.index(map_player), "HIT" if field in self.stats[map_player]["ships"] else "MISS")
+        self.__sendFieldResp(field, self.players.index(map_player),
+                             "HIT" if field in self.stats[map_player]["ships"] else "MISS")
 
     # Send a field response to all players
     def __sendFieldResp(self, field: list[int], map_player_num: int, state: str):
@@ -95,12 +96,12 @@ class Match:
     # Switch active player
     def cyclePlayer(self):
 
-        self.currentPlayer = self.players[len(self.players)-1-self.players.index(self.currentPlayer)]
+        self.currentPlayer = self.players[len(self.players) - 1 - self.players.index(self.currentPlayer)]
 
     # Request bombing a field
     def fieldReq(self, field: list[int], player: Client):
         if player == self.currentPlayer and player in self.players:
-            field_player = self.players[len(self.players)-1-self.players.index(player)];
+            field_player = self.players[len(self.players) - 1 - self.players.index(player)]
             if field not in self.stats[field_player]["bombed"]:
                 self.__bomb(field, field_player)
                 self.cyclePlayer()
@@ -126,6 +127,14 @@ class Match:
         if all_set:
             self.__startBomb()
 
+    def setSettings(self, player: Client, settings: dict):
+        if player is self.host:
+            self.settings = settings
+            self.broadcast({
+                "type": "SETTINGS",
+                "settings": self.settings
+            })
+
     # Start the placing phase (only host)
     def requestStartPlacing(self, player: Client):
         if self.host == player:
@@ -133,6 +142,10 @@ class Match:
 
     # Send login update when new palyer joins match
     def sendPlayerUpdate(self):
+        self.broadcast({
+            "type": "SETTINGS",
+            "settings": self.settings
+        })
         for player in self.players:
             self.server.send(player, {
                 "type": "LOGIN",

@@ -1,4 +1,3 @@
-
 import json
 
 from websocket_server import WebsocketServer
@@ -110,8 +109,10 @@ class Server(WebsocketServer):
                     if match and len(field) == 2:
                         match.fieldReq(field, client)
 
-                # case "SETTINGS":
-
+                case "SETTINGS":
+                    settings = data.get("settings", {})
+                    if match:
+                        match.setSettings(client, settings)
 
 
         except Exception as e:
@@ -120,7 +121,6 @@ class Server(WebsocketServer):
     def send(self, client: Client, data: dict):
         print(f"SENDING: {data} to {client}")
         self.send_message(client.client, json.dumps(data))
-
 
 
 if __name__ == "__main__":
