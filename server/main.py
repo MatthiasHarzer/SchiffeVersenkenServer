@@ -56,7 +56,7 @@ class Server(WebsocketServer):
             match data.get("type", None):
                 case "LOGIN":
                     name = data.get("name", "")
-                    if len(name) <= 0:
+                    if not name or len(name) <= 0:
                         name = genericName()
                     client.name = name
 
@@ -89,6 +89,8 @@ class Server(WebsocketServer):
                     })
                     if match:
                         match.sendPlayerUpdate()
+                case "LEAVE":
+                    Match.removePlayer(client)
 
                 case "GAME_STATE":
                     state = data.get("state", "")

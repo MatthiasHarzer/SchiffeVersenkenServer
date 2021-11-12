@@ -93,6 +93,10 @@ class Match:
             "state": state
         })
 
+    def __removePlayer(self, player: Client):
+        self.players.remove(player)
+        self.stats.pop(player)
+
     # Switch active player
     def cyclePlayer(self):
 
@@ -178,12 +182,13 @@ class Match:
     # Remove a player from all matches (when disconnect); if host -> delete match
     @staticmethod
     def removePlayer(player: Client):
-        for m in ongoing_matches:
-            if player in m.players:
-                if m.host == player:
-                    ongoing_matches.remove(m)
+        for match in ongoing_matches:
+            if player in match.players:
+                if match.host == player:
+                    ongoing_matches.remove(match)
                 else:
-                    m.players.remove(player)
+                    match.__removePlayer(player)
+                    # m.players.remove(player)
 
 
 ongoing_matches: list[Match] = []
