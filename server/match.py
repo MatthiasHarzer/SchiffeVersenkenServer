@@ -49,6 +49,11 @@ class Match:
             "type": "GAME_STATE",
             "state": "PLACE"
         })
+        # player = round(random.random())
+        # self.broadcast({
+        #     "type": "GAME_STATE",
+        #     "state": f"W{player}"
+        # })
 
     # Start bombing phase
     def __startBomb(self):
@@ -96,6 +101,7 @@ class Match:
     def __removePlayer(self, player: Client):
         self.players.remove(player)
         self.stats.pop(player)
+        self.sendPlayerUpdate()
 
     # Switch active player
     def cyclePlayer(self):
@@ -185,6 +191,7 @@ class Match:
         for match in ongoing_matches:
             if player in match.players:
                 if match.host == player:
+                    match.broadcast({"type": "KICK"})  # Kick all players
                     ongoing_matches.remove(match)
                 else:
                     match.__removePlayer(player)
