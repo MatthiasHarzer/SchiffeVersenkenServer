@@ -101,6 +101,7 @@ class Match:
     def __removePlayer(self, player: Client):
         self.players.remove(player)
         self.stats.pop(player)
+        self.server.send(player, {"type": "KICK"})
         self.sendPlayerUpdate()
 
     # Switch active player

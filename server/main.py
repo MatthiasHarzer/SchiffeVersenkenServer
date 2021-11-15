@@ -92,6 +92,11 @@ class Server(WebsocketServer):
                 case "LEAVE":
                     Match.removePlayer(client)
 
+                case "KICK":
+                    player_nr = data.get("playerNr", -1)
+                    if client == match.players[player_nr] or match.host == client:
+                        Match.removePlayer(match.players[player_nr])
+
                 case "GAME_STATE":
                     state = data.get("state", "")
                     match state:
