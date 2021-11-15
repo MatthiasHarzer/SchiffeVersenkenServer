@@ -117,10 +117,9 @@ class Server(WebsocketServer):
                         match.fieldReq(field, client)
 
                 case "SETTINGS":
-                    settings = data.get("settings", {})
-                    if match:
+                    settings = data.get("settings", [])
+                    if match and len(settings) > 0:
                         match.setSettings(client, settings)
-
 
         except Exception as e:
             print(f"error {e}")

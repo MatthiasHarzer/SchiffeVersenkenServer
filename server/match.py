@@ -12,9 +12,9 @@ class Match:
         self.players: list[Client] = [
             player0
         ]
-        self.settings = {
+        self.settings = [
             # DEFAULT SETTINGS
-        }
+        ]
         self.stats = {
             player0: {
                 "ships": [],
