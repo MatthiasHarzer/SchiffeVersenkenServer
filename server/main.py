@@ -78,6 +78,20 @@ class Server(WebsocketServer):
                     })
                     match.sendPlayerUpdate()
 
+                    # for _ in range(50):
+                    #     match.broadcast({
+                    #         "type": "CHAT",
+                    #         "message": "Test message",
+                    #         "playerNr": match.players.index(client)
+                    #     })
+                    #
+                    #
+                    # match.broadcast({
+                    #     "type": "CHAT",
+                    #     "message": "Very long test message to test the test chat test applicatoin of the Schiffeversenken game yesssssssssss",
+                    #     "playerNr": match.players.index(client)
+                    # })
+
                 case "JOIN":
                     id_ = data.get("id", "")
                     mid = data.get("mid", "")
@@ -120,6 +134,15 @@ class Server(WebsocketServer):
                     settings = data.get("settings", [])
                     if match and len(settings) > 0:
                         match.setSettings(client, settings)
+
+                case "CHAT":
+                    message = data.get("message", None)
+                    if match and message:
+                        match.broadcast({
+                            "type": "CHAT",
+                            "message": message,
+                            "playerNr": match.players.index(client)
+                        })
 
         except Exception as e:
             print(f"error {e}")
